@@ -1,4 +1,4 @@
-export default function Home() {
+'use client';export default function Home() {
   return (
     <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-between p-8 sm:p-20 font-sans">
       {/* Hero Section */}
