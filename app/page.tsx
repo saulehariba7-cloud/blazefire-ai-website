@@ -3,11 +3,11 @@
     <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-between p-8 sm:p-20 font-sans">
       {/* Hero Section */}
       <main className="flex flex-col items-center text-center max-w-2xl my-auto">
-        <span className="px-4 py-1.5 rounded-full text-sm font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20 mb-6">
+        <span className="px-4 py-1.5 rounded-full text-sm font-medium bg-indigo-950 text-cyan-500 border border-white/20 mb-6">
           🚀 Welcome to My Space
         </span>
         
-        <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-teal-300 to-emerald-400">
+        <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-950 via-teal-300 to-emerald-400">
           Main Apni AI Website Bana Rahi Hu
         </h1>
         
