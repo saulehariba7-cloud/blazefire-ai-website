@@ -68,11 +68,11 @@ export default function Home() {
 
           <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
             {[
-              ['🖼️', '2D Image', 'Create AI images from text prompts.'],
-              ['🎬', 'AI Video', 'Turn ideas into AI video concepts.'],
-              ['✨', 'Animation', 'Create animated content with AI.'],
+              ['🖼️', 'Images', 'Create AI images from text prompts.'],
+              ['🎬', '2D Video', 'Turn ideas into AI video concepts.'],
+              ['✨', '3D Video', 'Create animated content with AI.'],
               ['👤', '4K Characters', 'Design realistic AI characters.'],
-              ['🔊', 'Text to Voice', 'Convert text into voice content.'],
+              ['🔊', 'Text to Videos', 'Convert text into voice content.'],
             ].map(([icon, title, description]) => (
               <div
                 key={title}
