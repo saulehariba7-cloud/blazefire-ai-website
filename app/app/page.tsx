@@ -83,3 +83,45 @@ export default function Home() {
     </main>
   );
 }
+<section id="characters" className="px-6 py-20">
+  <div className="mx-auto max-w-7xl">
+
+    <h2 className="text-center text-4xl font-bold">
+      AI Characters
+    </h2>
+
+    <p className="mx-auto mt-4 max-w-2xl text-center text-slate-400">
+      Create realistic, 2D, 3D and animated characters with AI.
+    </p>
+
+    <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+
+      {[
+        ['👤', 'Realistic Characters', 'Create realistic AI characters.'],
+        ['🎨', '2D Characters', 'Create creative 2D characters.'],
+        ['🧊', '3D Characters', 'Create detailed 3D characters.'],
+        ['🎬', 'Animated Characters', 'Create animated characters with AI.'],
+      ].map(([icon, title, description]) => (
+        <div
+          key={title}
+          className="rounded-2xl border border-white/10 bg-white/5 p-6 transition hover:border-cyan-400/40"
+        >
+          <div className="text-4xl">{icon}</div>
+
+          <h3 className="mt-5 text-xl font-bold">
+            {title}
+          </h3>
+
+          <p className="mt-3 text-sm text-slate-400">
+            {description}
+          </p>
+
+          <button className="mt-6 w-full rounded-lg border border-cyan-400/30 px-4 py-2 text-sm text-cyan-300">
+            Open Tool
+          </button>
+        </div>
+      ))}
+
+    </div>
+  </div>
+</section>
