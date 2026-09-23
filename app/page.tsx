@@ -75,7 +75,6 @@ export default function Home() {
               ['🔊', 'Text to Videos', 'Convert text into voice content.'],
             ].map(([icon, title, description]) => (
               <div
-                <img src="
                 key={title}
                 className="rounded-2xl border border-white/10 bg-white/5 p-6"
               >
