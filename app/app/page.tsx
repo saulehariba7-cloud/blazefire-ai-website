@@ -8,6 +8,9 @@ export default function Home() {
       </nav>
 
       {/* Hero Section */}
+      <div className="flex justify-center my-6">
+  <img src="/character-image.png" alt="3D AI Character" className="w-72 h-auto rounded-xl" />
+</div>
       <header className="text-center max-w-4xl mx-auto mb-16">
         <div className="inline-block mb-4 px-4 py-1.5 rounded-full bg-teal-500/10 border border-teal-400/30 text-teal-300 text-xs font-semibold">
           🎁 Launch Offer: 3 Free Videos & Images Included
@@ -103,7 +106,7 @@ export default function Home() {
         ['🎬', 'Animated Characters', 'Create animated characters with AI.'],
       ].map(([icon, title, description]) => (
         <div
-        <img src="
+      
           key={title}
           className="rounded-2xl border border-white/10 bg-white/5 p-6 transition hover:border-cyan-400/40"
         >
