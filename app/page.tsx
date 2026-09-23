@@ -1,47 +1,168 @@
-'use client';export default function Home() {
+'use client';
+
+export default function Home() {
   return (
-    <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-between p-8 sm:p-20 font-sans">
-      {/* Hero Section */}
-      <main className="flex flex-col items-center text-center max-w-2xl my-auto">
-        <span className="px-4 py-1.5 rounded-full text-sm font-medium bg-indigo-950 text-cyan-500 border border-white/20 mb-6">
-          🚀 Welcome to My Space
-        </span>
-        
-        <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-950 via-teal-300 to-emerald-400">
-          Main Apni AI Website Bana Rahi Hu
-        </h1>
-        
-        <p className="mt-6 text-lg sm:text-xl text-slate-300 leading-relaxed">
-          Yeh meri personal website hai jise maine Next.js, React aur Tailwind CSS ka use karke banaya hai.
-        </p>
-
-        {/* Feature Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-10 w-full text-left">
-          <div className="p-5 rounded-2xl bg-slate-800/60 border border-slate-700/50">
-            <h3 className="font-semibold text-lg text-blue-400">⚡ Modern Tech</h3>
-            <p className="text-sm text-slate-400 mt-1">Next.js App Router aur React par built hai.</p>
+    <main className="min-h-screen bg-slate-950 text-white">
+      {/* Navigation */}
+      <nav className="border-b border-white/10 px-6 py-5">
+        <div className="mx-auto flex max-w-7xl items-center justify-between">
+          <div className="text-2xl font-bold">
+            Teenx <span className="text-cyan-400">Generator</span>
           </div>
-          <div className="p-5 rounded-2xl bg-slate-800/60 border border-slate-700/50">
-            <h3 className="font-semibold text-lg text-emerald-400">🎨 Custom Design</h3>
-            <p className="text-sm text-slate-400 mt-1">Pure Tailwind CSS se fully customized aur responsive.</p>
-          </div>
-        </div>
 
-        {/* Buttons */}
-        <div className="mt-8 flex gap-4 flex-wrap justify-center">
-          <button 
-            onClick={() => alert("Welcome to my site!")}
-            className="px-6 py-3 rounded-full bg-blue-600 hover:bg-blue-500 font-medium transition-all duration-200 shadow-lg shadow-blue-500/30"
-          >
-            Click Me
+          <div className="hidden gap-6 md:flex text-sm text-slate-300">
+            <a href="#tools">AI Tools</a>
+            <a href="#pricing">Pricing</a>
+            <a href="#about">About</a>
+          </div>
+
+          <button className="rounded-xl bg-cyan-500 px-5 py-2 font-semibold text-slate-950">
+            Get Started
           </button>
         </div>
-      </main>
+      </nav>
+
+      {/* Hero */}
+      <section className="px-6 py-24 text-center">
+        <div className="mx-auto max-w-4xl">
+          <div className="mb-6 inline-block rounded-full border border-cyan-400/30 bg-cyan-400/10 px-4 py-2 text-sm text-cyan-300">
+            AI Creation Studio
+          </div>
+
+          <h1 className="text-5xl font-extrabold tracking-tight md:text-7xl">
+            Create With
+            <span className="block text-cyan-400">Teenx Generator</span>
+          </h1>
+
+          <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-300">
+            Create images, videos, animations, characters and voice content
+            with powerful AI tools in one place.
+          </p>
+
+          <div className="mt-10 flex flex-col justify-center gap-4 sm:flex-row">
+            <button className="rounded-xl bg-cyan-500 px-7 py-3 font-bold text-slate-950">
+              Start Creating
+            </button>
+
+            <a
+              href="#pricing"
+              className="rounded-xl border border-white/20 px-7 py-3 font-semibold"
+            >
+              View Plans
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* Tools */}
+      <section id="tools" className="px-6 py-20">
+        <div className="mx-auto max-w-7xl">
+          <h2 className="text-center text-4xl font-bold">
+            AI Creation Tools
+          </h2>
+
+          <p className="mx-auto mt-4 max-w-2xl text-center text-slate-400">
+            Your creative workspace for images, video, animation, characters
+            and voice.
+          </p>
+
+          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
+            {[
+              ['🖼️', '2D Image', 'Create AI images from text prompts.'],
+              ['🎬', 'AI Video', 'Turn ideas into AI video concepts.'],
+              ['✨', 'Animation', 'Create animated content with AI.'],
+              ['👤', '4K Characters', 'Design realistic AI characters.'],
+              ['🔊', 'Text to Voice', 'Convert text into voice content.'],
+            ].map(([icon, title, description]) => (
+              <div
+                key={title}
+                className="rounded-2xl border border-white/10 bg-white/5 p-6"
+              >
+                <div className="text-4xl">{icon}</div>
+                <h3 className="mt-5 text-xl font-bold">{title}</h3>
+                <p className="mt-3 text-sm text-slate-400">{description}</p>
+
+                <button className="mt-6 w-full rounded-lg border border-cyan-400/30 px-4 py-2 text-sm text-cyan-300">
+                  Open Tool
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing */}
+      <section id="pricing" className="border-t border-white/10 px-6 py-20">
+        <div className="mx-auto max-w-6xl">
+          <h2 className="text-center text-4xl font-bold">Choose Your Plan</h2>
+
+          <p className="mx-auto mt-4 max-w-xl text-center text-slate-400">
+            Choose a plan for your AI creation needs.
+          </p>
+
+          <div className="mt-12 grid gap-6 md:grid-cols-3">
+            {[
+              {
+                name: 'Basic',
+                price: '₹399',
+                features: ['AI Image Creation', 'Basic generations', 'Personal workspace'],
+              },
+              {
+                name: 'Standard',
+                price: '₹599',
+                features: ['More AI generations', 'Image & Video tools', 'Priority workspace'],
+              },
+              {
+                name: 'Premium',
+                price: '₹999',
+                features: ['Advanced AI tools', 'Higher usage limits', 'Premium workspace'],
+              },
+            ].map((plan) => (
+              <div
+                key={plan.name}
+                className="rounded-2xl border border-white/10 bg-white/5 p-8"
+              >
+                <h3 className="text-2xl font-bold">{plan.name}</h3>
+
+                <div className="mt-5 text-4xl font-extrabold">
+                  {plan.price}
+                  <span className="text-sm font-normal text-slate-400">
+                    /month
+                  </span>
+                </div>
+
+                <ul className="mt-7 space-y-3 text-sm text-slate-300">
+                  {plan.features.map((feature) => (
+                    <li key={feature}>✓ {feature}</li>
+                  ))}
+                </ul>
+
+                <button className="mt-8 w-full rounded-xl bg-cyan-500 px-5 py-3 font-bold text-slate-950">
+                  Choose {plan.name}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* About */}
+      <section id="about" className="px-6 py-20 text-center">
+        <h2 className="text-3xl font-bold">One Creative AI Workspace</h2>
+
+        <p className="mx-auto mt-5 max-w-2xl text-slate-400">
+          Teenx Generator is designed as a single workspace for creative
+          AI generation.
+        </p>
+      </section>
 
       {/* Footer */}
-      <footer className="text-slate-500 text-sm mt-12">
-        © {new Date().getFullYear()} My Personal Website. Built with Next.js
+      <footer className="border-t border-white/10 px-6 py-8 text-center text-sm text-slate-500">
+        © 2026 Teenx Generator. All rights reserved.
       </footer>
-    </div>
+    </main>
   );
 }
+        
+       
+          
