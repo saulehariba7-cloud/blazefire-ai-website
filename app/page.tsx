@@ -1,47 +1,55 @@
-'use client';export default function Home() {
+export default function Home() {
   return (
-    <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-between p-8 sm:p-20 font-sans">
-      {/* Hero Section */}
-      <main className="flex flex-col items-center text-center max-w-2xl my-auto">
-        <span className="px-4 py-1.5 rounded-full text-sm font-medium bg-indigo-950 text-cyan-500 border border-white/20 mb-6">
-          🚀 Welcome to My Space
-        </span>
+    <main className="min-h-screen bg-black text-white p-8">
+      <h1 className="text-3xl font-bold text-center mb-8">BlazeFire AI</h1>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
         
-        <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-950 via-teal-300 to-emerald-400">
-          Main Apni AI Website Bana Rahi Hu
-        </h1>
-        
-        <p className="mt-6 text-lg sm:text-xl text-slate-300 leading-relaxed">
-          Yeh meri personal website hai jise maine Next.js, React aur Tailwind CSS ka use karke banaya hai.
-        </p>
-
-        {/* Feature Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-10 w-full text-left">
-          <div className="p-5 rounded-2xl bg-slate-800/60 border border-slate-700/50">
-            <h3 className="font-semibold text-lg text-blue-400">⚡ Modern Tech</h3>
-            <p className="text-sm text-slate-400 mt-1">Next.js App Router aur React par built hai.</p>
+        {/* 1. Images Card */}
+        <div className="bg-gray-900 border border-gray-800 p-6 rounded-xl flex flex-col justify-between">
+          <div>
+            <h3 className="text-xl font-bold mb-2">Images</h3>
+            <p className="text-gray-400 mb-4">Generate stunning AI images.</p>
           </div>
-          <div className="p-5 rounded-2xl bg-slate-800/60 border border-slate-700/50">
-            <h3 className="font-semibold text-lg text-emerald-400">🎨 Custom Design</h3>
-            <p className="text-sm text-slate-400 mt-1">Pure Tailwind CSS se fully customized aur responsive.</p>
-          </div>
-        </div>
-
-        {/* Buttons */}
-        <div className="mt-8 flex gap-4 flex-wrap justify-center">
-          <button 
-            onClick={() => alert("Welcome to my site!")}
-            className="px-6 py-3 rounded-full bg-blue-600 hover:bg-blue-500 font-medium transition-all duration-200 shadow-lg shadow-blue-500/30"
-          >
-            Click Me
+          <button className="bg-transparent border border-gray-600 px-4 py-2 rounded-lg w-full hover:bg-gray-800 transition">
+            Open Tool
           </button>
         </div>
-      </main>
 
-      {/* Footer */}
-      <footer className="text-slate-500 text-sm mt-12">
-        © {new Date().getFullYear()} My Personal Website. Built with Next.js
-      </footer>
-    </div>
+        {/* 2. Text to Video Card */}
+        <div className="bg-gray-900 border border-gray-800 p-6 rounded-xl flex flex-col justify-between">
+          <div>
+            <h3 className="text-xl font-bold mb-2">Text to Video</h3>
+            <p className="text-gray-400 mb-4">Transform text into dynamic videos.</p>
+          </div>
+          <button className="bg-transparent border border-gray-600 px-4 py-2 rounded-lg w-full hover:bg-gray-800 transition">
+            Open Tool
+          </button>
+        </div>
+
+        {/* 3. 3D Animation Video Card */}
+        <div className="bg-gray-900 border border-gray-800 p-6 rounded-xl flex flex-col justify-between">
+          <div>
+            <h3 className="text-xl font-bold mb-2">3D Animation Video</h3>
+            <p className="text-gray-400 mb-4">Create animated content with AI.</p>
+          </div>
+          <button className="bg-transparent border border-gray-600 px-4 py-2 rounded-lg w-full hover:bg-gray-800 transition">
+            Open Tool
+          </button>
+        </div>
+
+        {/* 4. Characters Card */}
+        <div className="bg-gray-900 border border-gray-800 p-6 rounded-xl flex flex-col justify-between">
+          <div>
+            <h3 className="text-xl font-bold mb-2">Characters</h3>
+            <p className="text-gray-400 mb-4">Design realistic AI characters.</p>
+          </div>
+          <button className="bg-transparent border border-gray-600 px-4 py-2 rounded-lg w-full hover:bg-gray-800 transition">
+            Open Tool
+          </button>
+        </div>
+
+      </div>
+    </main>
   );
 }
