@@ -103,6 +103,7 @@ export default function Home() {
         ['🎬', 'Animated Characters', 'Create animated characters with AI.'],
       ].map(([icon, title, description]) => (
         <div
+        <img src="
           key={title}
           className="rounded-2xl border border-white/10 bg-white/5 p-6 transition hover:border-cyan-400/40"
         >
