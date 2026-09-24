@@ -13,12 +13,59 @@ export default function Home() {
   // Handle Generation Simulation
   const handleGenerate = (toolName: string) => {
     if (credits <= 0) {
-      alert("Your free credits have ended! Please purchase a monthly plan below to continue.");
+      alert("Your free credits have ended. Please purchase a monthly plan below to continue.");
       return;
     }
 
     if (!prompt.trim()) {
-      alert("Kripya kuch prompt ya text type karein!");
+      alert("Please enter a prompt or text!");
+      return;
+    }
+
+    setLoading(true);
+    setOutput("");
+
+    setTimeout(() => {
+      setLoading(false);
+      setCredits(credits - 1);
+
+      if (toolName === "image" || toolName === "text-image") {
+        const p = prompt.toLowerCase();
+        let imageUrl = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80"; // Default professional tech/aesthetic art
+        
+        // Smart matching to ensure 100% clean, high-quality, relevant images without weird artifacts
+        if (p.includes("dog") || p.includes("puppy") || p.includes("kutta")) {
+          imageUrl = "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=800&auto=format&fit=crop&q=80";
+        } else if (p.includes("cat") || p.includes("kitten") || p.includes("billi")) {
+          imageUrl = "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=800&auto=format&fit=crop&q=80";
+        } else if (p.includes("car") || p.includes("bike") || p.includes("vehicle")) {
+          imageUrl = "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=800&auto=format&fit=crop&q=80";
+        } else if (p.includes("nature") || p.includes("mountain") || p.includes("sunset") || p.includes("pahar")) {
+          imageUrl = "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800&auto=format&fit=crop&q=80";
+        } else if (p.includes("girl") || p.includes("boy") || p.includes("person") || p.includes("portrait")) {
+          imageUrl = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80";
+        }
+        
+        setOutput(imageUrl);
+      } else {
+        // Professional AI Content Writer Output
+        setOutput(
+          `✨ AI Generated Content for "${prompt}":\n\n` +
+          `📌 Heading / Title: Ultimate Creative Solution for ${prompt}\n\n` +
+          `📝 Detailed Content:\n` +
+          `Your request regarding "${prompt}" has been successfully processed by Teenx Generator AI. This content is professionally optimized for maximum engagement, clarity, and creativity, making it ready to use for your blogs, social media posts, or marketing campaigns.\n\n` +
+          `🚀 Key Features:\n` +
+          `- Tailored specifically to your topic.\n` +
+          `- High conversion and readability score.\n` +
+          `- Created instantly by Teenx AI Engine!`
+        );
+      }
+    }, 1500);
+  };
+    }
+
+    if (!prompt.trim()) {
+      alert("type Prompt or text!");
       return;
     }
 
