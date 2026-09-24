@@ -104,7 +104,7 @@ export default function Home() {
           {activeTab === "content" && "✍️ AI Text Writer & Content Generator"}
         </h2>
         <p className="text-gray-900 mb-6 font-bold text-sm">
-          Shuruat mein aapko **3 Free Credits** milte hain. Bad mein unlimited access ke liye monthly plan lein!
+          "Get **3 Free Credits** to start with.Upgrade a monthly plan later for continoue access!"
         </p>
 
         <div className="space-y-4">
@@ -233,8 +233,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="text-center text-black font-bold mt-12 py-6 border-t border-purple-400">
         <p>&copy; 2026 Teenx Generator. 
-All rights Reserved. 
-Built with 100% Free Hosting & Vercel.</p>
+All rights Reserved.</p>
       </footer>
     </main>
   );
