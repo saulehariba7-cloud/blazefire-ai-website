@@ -13,7 +13,7 @@ export default function Home() {
   // Handle Generation Simulation
   const handleGenerate = (toolName: string) => {
     if (credits <= 0) {
-      alert("Aapke free credits khatam ho gaye hain! Kripya neeche diye gaye plans mein se koi monthly plan kharidein.");
+      alert("Your free credits have ended! Please purchase a monthly plan below to continue.");
       return;
     }
 
@@ -232,8 +232,8 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="text-center text-black font-bold mt-12 py-6 border-t border-purple-400">
-        <p>&copy; 2026 Teenx Generator. 
-All rights Reserved.</p>
+        <p>&copy; 2026 Teenx Generator 
+               All rights Reserved.</p>
       </footer>
     </main>
   );
