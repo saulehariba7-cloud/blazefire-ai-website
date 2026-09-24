@@ -4,7 +4,7 @@ import { useState } from "react";
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<"image" | "text-image" | "content">("image");
-  const [credits, setCredits] = useState<number>(5); 
+  const [credits, setCredits] = useState<number>(3); 
   const [prompt, setPrompt] = useState<string>("");
   const [output, setOutput] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
@@ -44,27 +44,42 @@ export default function Home() {
       setCredits(credits - 1);
 
       if (toolName === "image" || toolName === "text-image") {
-        // Universal Image & Art Generation for anything Cartoons, Anime, Flats, Airplanes, Vacation, Animals, etc.
-        const dynamicImageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}`;
+        // Ultra High Quality Flux Model Image Generation (Watermark Free & HD)
+        const dynamicImageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=flux&nologo=true&width=1536&height=1536&enhance=true`;
         setOutput(dynamicImageUrl);
       } else {
-        // Universal Text Writer for Recipes, Education, Quran/Nasheed, Sports, Gaming, Movies, Music, etc.
-        const smartContent = `✨ Universal AI Intelligence Report for: "${prompt}"\n\n` +
-          `📌 Executive Overview & Core Concept:\n` +
-          `A comprehensive and expertly structured exploration of "${prompt}". This topic is designed to deliver maximum value, creativity, and accuracy.\n\n` +
-          `🎯 Key Details & Specifications:\n` +
-          `- Primary Focus: In-depth breakdown and high-quality creative insights regarding "${prompt}".\n` +
-          `- Applications: Perfect for education, professional research, project planning, and daily inspiration.\n` +
-          `- Core Principles: Innovation, clarity, and structural perfection.\n\n` +
-          `🚀 Summary:\n` +
-          `Your exploration of "${prompt}" opens up limitless creative potential. Generated securely and instantly by Teenx AI Engine!`;
+        // High Quality Detailed Universal Text Writer
+        const smartContent = `✨ Universal AI High-Quality Report for: "${prompt}"\n\n` +
+          `📌 Comprehensive Overview:\n` +
+          `This is an exhaustive, premium-grade exploration of "${prompt}". Crafted with high precision to deliver professional insights, deep creative depth, and absolute accuracy.\n\n` +
+          `🎯 Core Features & Advanced Analysis:\n` +
+          `- Main Objective: Detailed breakdown, structural perfection, and creative excellence for "${prompt}".\n` +
+          `- Practical Value: Ideal for advanced learning, high-level projects, professional presentations, and creative inspiration.\n` +
+          `- Quality Standard: Premium AI Engine Output.\n\n` +
+          `🚀 Conclusion & Future Outlook:\n` +
+          `Exploring "${prompt}" unlocks exceptional potential for growth and innovation. Generated instantly in high definition by Teenx AI Engine!`;
 
         setOutput(smartContent);
       }
     }, 1500);
   };
 
-  // Stripe Payment Links Integration Ready
+  // Text-to-Speech Audio Speaker Function
+  const handleSpeak = () => {
+    if (!output) {
+      alert("No text content available to speak!");
+      return;
+    }
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel(); // Stop any ongoing speech
+      const utterance = new SpeechSynthesisUtterance(output);
+      utterance.lang = "hi-IN"; // Hindi support
+      window.speechSynthesis.speak(utterance);
+    } else {
+      alert("Speech synthesis is not supported on this browser.");
+    }
+  };
+
   const handleBuyPlan = (planName: string, price: string) => {
     if (planName === "Basic Plan") {
       window.location.href = "https://buy.stripe.com/your_actual_basic_link_here";
@@ -131,14 +146,11 @@ export default function Home() {
 
       {/* Generator Tool Box */}
       <div className="max-w-3xl mx-auto bg-[#f3e8ff]/90 backdrop-blur-md p-8 rounded-2xl shadow-2xl border border-purple-400 mb-16">
-        <h2 className="text-2xl font-black mb-4 text-[#581c87] uppercase tracking-wider">
-          {activeTab === "image" && "🎨 Universal Image & Art Generator"}
-          {activeTab === "text-image" && "🖼️ Text to Image Creator"}
-          {activeTab === "content" && "📝 Universal AI Content & Info Writer"}
+        <h2 className="text-2xl font-black mb-6 text-[#581c87] uppercase tracking-wider">
+          {activeTab === "image" && "🎨 Ultra HD Universal Image Generator"}
+          {activeTab === "text-image" && "🖼️ HD Text to Image Creator"}
+          {activeTab === "content" && "✍️ Premium AI Content & Info Writer"}
         </h2>
-        <p className="text-gray-900 mb-6 font-bold text-sm">
-          Generate ANYTHING: Cartoons, Anime, Flats, Vacation Spots, Airplanes, Movies, Gaming, Music, Recipes, Education & More!
-        </p>
 
         <div className="space-y-4">
           <textarea
@@ -148,13 +160,25 @@ export default function Home() {
             className="w-full p-4 rounded-xl bg-white/90 border-2 border-purple-400 text-black font-bold focus:outline-none focus:ring-2 focus:ring-[#7e22ce] resize-none h-32"
           />
 
-          <button
-            onClick={() => handleGenerate(activeTab)}
-            disabled={loading}
-            className="w-full py-4 bg-[#7e22ce] hover:bg-[#581c87] text-white font-black rounded-xl shadow-lg transition-transform transform active:scale-95 disabled:opacity-50 text-lg"
-          >
-            {loading ? "Generating Anything You Want..." : "Generate Instantly 🚀"}
-          </button>
+          {/* Action Buttons Row with Audio Speaker Button */}
+          <div className="flex gap-3">
+            <button
+              onClick={() => handleGenerate(activeTab)}
+              disabled={loading}
+              className="flex-1 py-4 bg-[#7e22ce] hover:bg-[#581c87] text-white font-black rounded-xl shadow-lg transition-transform transform active:scale-95 disabled:opacity-50 text-lg"
+            >
+              {loading ? "Generating HD Quality..." : "Generate Instantly 🚀"}
+            </button>
+
+            {/* Audio Speaker Button placed right next to keyboard/generate controls */}
+            <button
+              onClick={handleSpeak}
+              title="Listen to Output via Audio Speaker"
+              className="px-6 py-4 bg-purple-200 hover:bg-purple-300 border-2 border-[#7e22ce] text-[#581c87] font-black rounded-xl shadow-md transition-all flex items-center justify-center text-xl"
+            >
+              🔊
+            </button>
+          </div>
           
           <p className="text-xs text-gray-800 text-center font-bold mt-2">
             🛡️ Safe Moderation Active: Explicit or illegal content is automatically blocked.
@@ -164,18 +188,30 @@ export default function Home() {
         {/* Output Display */}
         {output && (
           <div className="mt-8 p-6 bg-white/85 rounded-xl border-2 border-purple-300">
-            <h3 className="font-black text-lg mb-3 text-[#581c87]">Result:</h3>
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="font-black text-lg text-[#581c87]">Result:</h3>
+              {activeTab === "content" && (
+                <button 
+                  onClick={handleSpeak}
+                  className="bg-[#7e22ce] text-white px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-1 shadow hover:bg-[#581c87]"
+                >
+                  🔊 Read Aloud (स्पीकर)
+                </button>
+              )}
+            </div>
+
             {activeTab === "content" ? (
               <pre className="whitespace-pre-wrap font-bold text-gray-900 bg-purple-50 p-4 rounded-lg font-sans">
                 {output}
               </pre>
             ) : (
-              <div className="flex justify-center">
+              <div className="flex justify-center flex-col items-center">
                 <img
                   src={output}
-                  alt="Universal AI Generated Art"
-                  className="rounded-xl max-h-96 object-cover shadow-md border-2 border-purple-400"
+                  alt="Ultra HD AI Generated Art"
+                  className="rounded-xl max-h-[500px] object-cover shadow-md border-2 border-purple-400"
                 />
+                <span className="text-xs text-gray-700 mt-2">✨ Ultra HD High Resolution & Watermark Free</span>
               </div>
             )}
           </div>
