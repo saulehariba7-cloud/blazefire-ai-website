@@ -3,14 +3,12 @@
 import { useState } from "react";
 
 export default function Home() {
-  // State management
   const [activeTab, setActiveTab] = useState<"image" | "text-image" | "content">("image");
-  const [credits, setCredits] = useState<number>(3); // 3 Free credits to start
+  const [credits, setCredits] = useState<number>(3); 
   const [prompt, setPrompt] = useState<string>("");
   const [output, setOutput] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
 
-  // Handle Generation Simulation
   const handleGenerate = (toolName: string) => {
     if (credits <= 0) {
       alert("Your free credits have ended. Please purchase a monthly plan below to continue.");
@@ -31,9 +29,8 @@ export default function Home() {
 
       if (toolName === "image" || toolName === "text-image") {
         const p = prompt.toLowerCase();
-        let imageUrl = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80"; // Default professional tech/aesthetic art
+        let imageUrl = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80";
         
-        // Smart matching to ensure 100% clean, high-quality, relevant images without weird artifacts
         if (p.includes("dog") || p.includes("puppy") || p.includes("kutta")) {
           imageUrl = "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=800&auto=format&fit=crop&q=80";
         } else if (p.includes("cat") || p.includes("kitten") || p.includes("billi")) {
@@ -48,10 +45,9 @@ export default function Home() {
         
         setOutput(imageUrl);
       } else {
-        // Professional AI Content Writer Output
         setOutput(
           `✨ AI Generated Content for "${prompt}":\n\n` +
-          `📌 Heading / Title: Ultimate Creative Solution for ${prompt}\n\n` +
+          `📌 Heading / Title: Ultimate Creative Solution for "${prompt}"\n\n` +
           `📝 Detailed Content:\n` +
           `Your request regarding "${prompt}" has been successfully processed by Teenx Generator AI. This content is professionally optimized for maximum engagement, clarity, and creativity, making it ready to use for your blogs, social media posts, or marketing campaigns.\n\n` +
           `🚀 Key Features:\n` +
@@ -62,37 +58,15 @@ export default function Home() {
       }
     }, 1500);
   };
-    }
-
-    if (!prompt.trim()) {
-      alert("type Prompt or text!");
-      return;
-    }
-
-    setLoading(true);
-    setOutput("");
-
-    setTimeout(() => {
-      setLoading(false);
-      setCredits(credits - 1);
-      if (toolName === "image") {
-        setOutput("https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1000&auto=format&fit=crop");
-      } else if (toolName === "text-image") {
-        setOutput("https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?q=80&w=1000&auto=format&fit=crop");
-      } else {
-        setOutput(`Generated Content for "${prompt}":\n\nTeenx Generator powered AI content:\n- Stunning ideas and engagement booster for your brand.\n- Optimized for maximum reach and creativity! ✨`);
-      }
-    }, 1500);
-  };
 
   const handleBuyPlan = (planName: string, price: string) => {
-    alert(`Aapne ${planName} (${price}) plan select kiya hai. Payment gateway integration yahan connect hoga!`);
+    alert(`You selected the ${planName} (${price}). Payment gateway integration will be connected here!`);
   };
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-[#d8b4fe] via-[#c084fc] to-[#7e22ce] text-black font-bold p-6 md:p-12">
       {/* Header Section */}
-      <header className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center bg-[#f3e8ff]/80 backdrop-blur-md p-6 rounded-2xl shadow-xl border border-purple-400 mb-10">
+      <header className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center bg-[#f3e8ff]/85 backdrop-blur-md p-6 rounded-2xl shadow-xl border border-purple-400 mb-10">
         <div>
           <h1 className="text-3xl md:text-4xl font-extrabold text-black tracking-wide">
             ✨ Teenx Generator
@@ -151,7 +125,7 @@ export default function Home() {
           {activeTab === "content" && "✍️ AI Text Writer & Content Generator"}
         </h2>
         <p className="text-gray-900 mb-6 font-bold text-sm">
-          "Get **3 Free Credits** to start with.Upgrade a monthly plan later for continoue access!"
+          "Get **3 Free Credits** to start with. Upgrade a monthly plan later for continuous access!"
         </p>
 
         <div className="space-y-4">
@@ -177,7 +151,7 @@ export default function Home() {
 
         {/* Output Display */}
         {output && (
-          <div className="mt-8 p-6 bg-white/80 rounded-xl border-2 border-purple-300">
+          <div className="mt-8 p-6 bg-white/85 rounded-xl border-2 border-purple-300">
             <h3 className="font-black text-lg mb-3 text-[#581c87]">Result:</h3>
             {activeTab === "content" ? (
               <pre className="whitespace-pre-wrap font-bold text-gray-900 bg-purple-50 p-4 rounded-lg">
@@ -278,9 +252,8 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="text-center text-black font-bold mt-12 py-6 border-t border-purple-400">
-        <p>&copy; 2026 Teenx Generator 
-               All rights Reserved.</p>
+      <footer className="text-center font-bold mt-12 py-6 border-t border-purple-400">
+        <p>&copy; 2026 Teenx Generator All rights Reserved.</p>
       </footer>
     </main>
   );
