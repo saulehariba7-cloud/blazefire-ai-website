@@ -144,7 +144,7 @@ export default function Home() {
             activeTab === 'writer' ? 'bg-purple-300 text-black shadow-lg scale-105' : 'bg-[#251047] text-purple-200 hover:bg-[#32165f]'
           }`}
         >
-          AI content 
+          AI Writer
         </button>
         <button
           onClick={() => setActiveTab('pricing')}
@@ -262,7 +262,7 @@ export default function Home() {
                   onClick={() => handleSpeak(generatedText)}
                   className="flex items-center gap-2 bg-purple-300 text-black px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-purple-200 transition cursor-pointer shadow"
                 >
-                 Speaker Listen Audio
+                  🔊 Listen Audio
                 </button>
               </div>
               <div className="bg-purple-200 text-black p-4 rounded-xl font-medium whitespace-pre-wrap leading-relaxed shadow-inner">
