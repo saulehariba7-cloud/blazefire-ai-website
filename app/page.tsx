@@ -1,1209 +1,703 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-type Tab = "image" | "poster" | "writer";
+type Mode = "image" | "poster" | "writer";
+type Style =
+  | "Modern"
+  | "Minimal"
+  | "Festival"
+  | "Business"
+  | "Education"
+  | "Event";
+type Ratio = "square" | "portrait" | "landscape";
 
-const restrictedWords = [
-  "porn",
-  "pornography",
-  "nude",
-  "nudity",
-  "sex",
-  "sexual",
-  "xxx",
-  "gore",
-  "suicide",
-  "self harm",
-  "self-harm",
-];
+type PosterCopy = {
+  headline: string;
+  subheadline: string;
+  body: string;
+  footer: string;
+};
 
 export default function Home() {
-  const [tab, setTab] = useState<Tab>("image");
-
+  const [mode, setMode] = useState<Mode>("image");
   const [prompt, setPrompt] = useState("");
-  const [title, setTitle] = useState("");
-  const [subtitle, setSubtitle] = useState("");
-  const [details, setDetails] = useState("");
-
-  const [image, setImage] = useState("");
-  const [writerOutput, setWriterOutput] = useState("");
+  const [style, setStyle] = useState<Style>("Modern");
+  const [ratio, setRatio] = useState<Ratio>("square");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const [credits, setCredits] = useState(3);
+  const [image, setImage] = useState("");
+  const [writerText, setWriterText] = useState("");
+  const [posterBackground, setPosterBackground] = useState("");
+  const [posterCopy, setPosterCopy] = useState<PosterCopy | null>(null);
 
-  const containsRestricted = (text: string) => {
-    const value = text.toLowerCase();
+  const [listening, setListening] = useState(false);
 
-    return restrictedWords.some((word) =>
-      value.includes(word)
-    );
-  };
+  const recognitionRef = useRef<any>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const generateImage = async () => {
+  useEffect(() => {
+    document.title = "Teenx Generator";
+  }, []);
+
+  // Draw poster text separately so AI does not have to create
+  // readable letters inside the image.
+  useEffect(() => {
+    if (!posterBackground || !posterCopy || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+
+    if (!ctx) return;
+
+    const img = new Image();
+
+    img.onload = () => {
+      const width =
+        ratio === "portrait"
+          ? 1200
+          : ratio === "landscape"
+          ? 1600
+          : 1400;
+
+      const height =
+        ratio === "portrait"
+          ? 1600
+          : ratio === "landscape"
+          ? 1000
+          : 1400;
+
+      canvas.width = width;
+      canvas.height = height;
+
+      ctx.clearRect(0, 0, width, height);
+
+      ctx.drawImage(img, 0, 0, width, height);
+
+      // Readability layer
+      const gradient = ctx.createLinearGradient(0, 0, 0, height);
+
+      gradient.addColorStop(0, "rgba(255,255,255,0.04)");
+      gradient.addColorStop(0.45, "rgba(255,255,255,0.06)");
+      gradient.addColorStop(1, "rgba(255,255,255,0.88)");
+
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, width, height);
+
+      const margin = Math.round(width * 0.07);
+      const maxWidth = width - margin * 2;
+
+      ctx.textAlign = "left";
+      ctx.fillStyle = "#130b22";
+
+      ctx.font = `800 ${Math.max(
+        42,
+        Math.round(width * 0.07)
+      )}px Arial`;
+
+      drawWrapped(
+        ctx,
+        posterCopy.headline,
+        margin,
+        Math.round(height * 0.17),
+        maxWidth,
+        Math.round(width * 0.08)
+      );
+
+      ctx.font = `600 ${Math.max(
+        24,
+        Math.round(width * 0.035)
+      )}px Arial`;
+
+      drawWrapped(
+        ctx,
+        posterCopy.subheadline,
+        margin,
+        Math.round(height * 0.35),
+        maxWidth,
+        Math.round(width * 0.045)
+      );
+
+      ctx.font = `500 ${Math.max(
+        20,
+        Math.round(width * 0.027)
+      )}px Arial`;
+
+      drawWrapped(
+        ctx,
+        posterCopy.body,
+        margin,
+        Math.round(height * 0.56),
+        maxWidth,
+        Math.round(width * 0.04)
+      );
+
+      if (posterCopy.footer) {
+        ctx.font = `700 ${Math.max(
+          18,
+          Math.round(width * 0.022)
+        )}px Arial`;
+
+        drawWrapped(
+          ctx,
+          posterCopy.footer,
+          margin,
+          Math.round(height * 0.87),
+          maxWidth,
+          Math.round(width * 0.035)
+        );
+      }
+    };
+
+    img.src = posterBackground;
+  }, [posterBackground, posterCopy, ratio]);
+
+  function drawWrapped(
+    ctx: CanvasRenderingContext2D,
+    text: string,
+    x: number,
+    y: number,
+    maxWidth: number,
+    lineHeight: number
+  ) {
+    const words = String(text || "").split(/\s+/);
+
+    let line = "";
+    let currentY = y;
+
+    for (const word of words) {
+      const next = line ? `${line} ${word}` : word;
+
+      if (ctx.measureText(next).width > maxWidth && line) {
+        ctx.fillText(line, x, currentY);
+
+        line = word;
+        currentY += lineHeight;
+      } else {
+        line = next;
+      }
+    }
+
+    if (line) {
+      ctx.fillText(line, x, currentY);
+    }
+  }
+
+  // Microphone
+  function startMicrophone() {
+    setError("");
+
+    const SpeechRecognition =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      setError(
+        "Microphone speech recognition is not supported in this browser."
+      );
+      return;
+    }
+
+    if (listening && recognitionRef.current) {
+      recognitionRef.current.stop();
+      setListening(false);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+
+    recognition.lang = "hi-IN";
+    recognition.interimResults = true;
+    recognition.continuous = false;
+
+    recognition.onstart = () => {
+      setListening(true);
+    };
+
+    recognition.onend = () => {
+      setListening(false);
+    };
+
+    recognition.onerror = () => {
+      setListening(false);
+      setError(
+        "Microphone input could not be read. Please try again."
+      );
+    };
+
+    recognition.onresult = (event: any) => {
+      let text = "";
+
+      for (
+        let index = event.resultIndex;
+        index < event.results.length;
+        index++
+      ) {
+        text += event.results[index][0].transcript;
+      }
+
+      setPrompt(text);
+    };
+
+    recognitionRef.current = recognition;
+
+    recognition.start();
+  }
+
+  async function generate() {
     if (!prompt.trim()) {
-      setError("Please enter an image description.");
+      setError("Please enter a topic or prompt first.");
       return;
     }
 
-    if (credits <= 0) {
-      setError("You have no credits left.");
-      return;
-    }
-
-    if (containsRestricted(prompt)) {
-      setError("This prompt contains restricted content.");
-      return;
-    }
+    if (loading) return;
 
     setLoading(true);
     setError("");
+
     setImage("");
+    setWriterText("");
+    setPosterBackground("");
+    setPosterCopy(null);
 
     try {
-      /*
-        Pollinations public image endpoint.
+      const response = await fetch("/api/generate", {
+        method: "POST",
 
-        IMPORTANT:
-        We use the image as a background only for posters.
-        Exact poster text is added with HTML/CSS.
-      */
+        headers: {
+          "Content-Type": "application/json",
+        },
 
-      const imagePrompt = encodeURIComponent(
-        `
-        Create an ultra high quality professional image.
-
-        Requirements:
-        - extremely detailed
-        - sharp image
-        - realistic lighting
-        - premium composition
-        - clean professional design
-        - high resolution
-        - no random text
-        - no fake letters
-        - no random numbers
-        - no logos
-        - no website names
-        - no watermark
-        - no typography
-
-        User request:
-        ${prompt}
-        `
-      );
-
-      const url =
-        `https://image.pollinations.ai/prompt/${imagePrompt}` +
-        `?model=flux` +
-        `&width=1536` +
-        `&height=1024` +
-        `&enhance=true`;
-
-      /*
-        Preload image so we know whether it actually loaded.
-      */
-
-      await new Promise<void>((resolve, reject) => {
-        const img = new Image();
-
-        img.onload = () => resolve();
-
-        img.onerror = () =>
-          reject(new Error("Image generation failed."));
-
-        img.src = url;
+        body: JSON.stringify({
+          mode,
+          prompt: prompt.trim(),
+          style,
+          ratio,
+        }),
       });
 
-      setImage(url);
-      setCredits((value) => Math.max(0, value - 1));
-    } catch (err) {
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data?.error || "Generation failed."
+        );
+      }
+
+      if (mode === "writer") {
+        setWriterText(data.text || "");
+      } else if (mode === "poster") {
+        setPosterBackground(
+          data.backgroundDataUrl || ""
+        );
+
+        setPosterCopy(data.copy || null);
+      } else {
+        setImage(data.imageDataUrl || "");
+      }
+    } catch (err: any) {
       setError(
-        err instanceof Error
-          ? err.message
-          : "Image generation failed."
+        err?.message ||
+          "Something went wrong while generating."
       );
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  const generatePoster = async () => {
-    if (!title.trim()) {
-      setError("Please enter a poster title.");
-      return;
-    }
+  function downloadDataUrl(
+    dataUrl: string,
+    filename: string
+  ) {
+    const link = document.createElement("a");
 
-    if (credits <= 0) {
-      setError("You have no credits left.");
-      return;
-    }
+    link.href = dataUrl;
+    link.download = filename;
 
-    const allText =
-      `${title} ${subtitle} ${details} ${prompt}`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  }
 
-    if (containsRestricted(allText)) {
-      setError("This poster contains restricted content.");
-      return;
-    }
+  function downloadPoster() {
+    const canvas = canvasRef.current;
 
-    setLoading(true);
-    setError("");
+    if (!canvas) return;
+
+    const link = document.createElement("a");
+
+    link.href = canvas.toDataURL("image/png");
+    link.download = "teenx-generator-poster.png";
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  }
+
+  function clearAll() {
+    setPrompt("");
     setImage("");
-
-    try {
-      /*
-        VERY IMPORTANT:
-
-        The AI creates ONLY the visual background.
-
-        It is NOT asked to draw the poster text.
-
-        This prevents:
-        "Annual Science Exhibition"
-        becoming
-        "Annu4l Scienc3 Exh1b1t1on"
-
-        The actual text is rendered by the browser.
-      */
-
-      const backgroundPrompt = encodeURIComponent(
-        `
-        Create a premium professional poster BACKGROUND.
-
-        Theme:
-        ${prompt || "modern professional event"}
-
-        Design requirements:
-        - premium graphic design
-        - cinematic lighting
-        - beautiful composition
-        - high detail
-        - sharp details
-        - professional colors
-        - sophisticated background
-        - clean empty area for typography
-        - visually balanced
-        - high resolution
-
-        ABSOLUTELY DO NOT GENERATE:
-        - text
-        - letters
-        - numbers
-        - words
-        - logos
-        - website names
-        - watermarks
-        - signatures
-
-        Background only.
-        `
-      );
-
-      const url =
-        `https://image.pollinations.ai/prompt/${backgroundPrompt}` +
-        `?model=flux` +
-        `&width=1536` +
-        `&height=1024` +
-        `&enhance=true`;
-
-      await new Promise<void>((resolve, reject) => {
-        const img = new Image();
-
-        img.onload = () => resolve();
-
-        img.onerror = () =>
-          reject(new Error("Poster background generation failed."));
-
-        img.src = url;
-      });
-
-      setImage(url);
-      setCredits((value) => Math.max(0, value - 1));
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Poster generation failed."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const generateWriter = async () => {
-    if (!prompt.trim()) {
-      setError("Please enter a writing topic.");
-      return;
-    }
-
-    if (credits <= 0) {
-      setError("You have no credits left.");
-      return;
-    }
-
-    if (containsRestricted(prompt)) {
-      setError("This prompt contains restricted content.");
-      return;
-    }
-
-    setLoading(true);
+    setWriterText("");
+    setPosterBackground("");
+    setPosterCopy(null);
     setError("");
-    setWriterOutput("");
+  }
 
-    try {
-      /*
-        Simple client-side writer demo.
+  const tabs = [
+    {
+      id: "image" as Mode,
+      icon: "✦",
+      label: "Images",
+    },
 
-        For production AI writing, connect this function
-        to your server-side AI API.
-      */
+    {
+      id: "poster" as Mode,
+      icon: "▣",
+      label: "Text to Image",
+    },
 
-      const text = `
-BLAZEFIRE AI — GENERATED CONTENT
-
-Topic:
-${prompt}
-
-Introduction
-${prompt} is an important and interesting topic that can be understood by looking at its main ideas, practical applications, and impact on everyday life.
-
-Main Discussion
-Understanding this subject requires attention to its key concepts and real-world importance. It can influence the way people learn, work, communicate, and solve problems.
-
-Key Points
-• Clear understanding of the main concept
-• Practical applications in everyday situations
-• Importance of responsible and thoughtful use
-• Opportunities for future development
-
-Conclusion
-Overall, ${prompt} is a valuable topic to explore. Learning about it can help students and creators develop better knowledge, creativity, and problem-solving skills.
-
-Generated with Blazefire.ai
-      `.trim();
-
-      await new Promise((resolve) =>
-        setTimeout(resolve, 800)
-      );
-
-      setWriterOutput(text);
-      setCredits((value) => Math.max(0, value - 1));
-    } catch {
-      setError("Writing failed.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGenerate = () => {
-    if (tab === "image") {
-      generateImage();
-    } else if (tab === "poster") {
-      generatePoster();
-    } else {
-      generateWriter();
-    }
-  };
-
-  const downloadImage = async () => {
-    if (!image) return;
-
-    try {
-      const response = await fetch(image);
-      const blob = await response.blob();
-
-      const blobUrl = URL.createObjectURL(blob);
-
-      const link = document.createElement("a");
-
-      link.href = blobUrl;
-      link.download = "blazefire-ai.png";
-
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-
-      URL.revokeObjectURL(blobUrl);
-    } catch {
-      window.open(image, "_blank");
-    }
-  };
-
-  const downloadPoster = async () => {
-    if (!image) return;
-
-    /*
-      This downloads the AI background.
-
-      The HTML text overlay is visible in the browser,
-      but converting the whole DOM poster into PNG requires
-      a canvas/html-to-image library.
-    */
-
-    await downloadImage();
-  };
+    {
+      id: "writer" as Mode,
+      icon: "Aa",
+      label: "AI Writer",
+    },
+  ];
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background:
-          "radial-gradient(circle at top, #1a0b02 0%, #050505 40%, #000 100%)",
-        color: "#fff",
-        fontFamily:
-          "Arial, Helvetica, sans-serif",
-      }}
-    >
+    <main className="app">
+      <div className="backgroundGlow glowOne" />
+      <div className="backgroundGlow glowTwo" />
+
       {/* HEADER */}
 
-      <header
-        style={{
-          borderBottom: "1px solid rgba(255,255,255,.08)",
-          background: "rgba(0,0,0,.75)",
-          backdropFilter: "blur(20px)",
-          position: "sticky",
-          top: 0,
-          zIndex: 50,
-        }}
-      >
-        <div
-          style={{
-            maxWidth: 1200,
-            margin: "auto",
-            padding: "18px 24px",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
+      <header className="topbar">
+        <button
+          className="brand"
+          onClick={clearAll}
+          aria-label="Teenx Generator home"
         >
-          <div>
-            <div
-              style={{
-                fontSize: 25,
-                fontWeight: 900,
-                letterSpacing: "-1px",
-              }}
-            >
-              Blaze
-              <span style={{ color: "#ff6b00" }}>
-                fire
-              </span>
-              <span style={{ color: "#fff" }}>
-                .ai
-              </span>
-            </div>
+          <span className="brandIcon">T</span>
 
-            <div
-              style={{
-                fontSize: 11,
-                color: "#777",
-                marginTop: 2,
-              }}
-            >
-              AI CREATION STUDIO
-            </div>
-          </div>
+          <span>
+            <strong>Teenx Generator</strong>
+            <small>AI Creative Studio</small>
+          </span>
+        </button>
 
-          <div
-            style={{
-              border: "1px solid rgba(255,107,0,.3)",
-              background: "rgba(255,107,0,.1)",
-              borderRadius: 999,
-              padding: "9px 15px",
-              fontSize: 13,
-              fontWeight: 700,
-            }}
-          >
-            ⚡ {credits} Credits
-          </div>
+        <div className="statusPill">
+          <span className="statusDot" />
+          Free to use
         </div>
       </header>
 
       {/* HERO */}
 
-      <section
-        style={{
-          maxWidth: 1200,
-          margin: "auto",
-          padding: "70px 24px 30px",
-        }}
-      >
-        <div
-          style={{
-            textAlign: "center",
-            maxWidth: 800,
-            margin: "auto",
-          }}
-        >
-          <div
-            style={{
-              display: "inline-block",
-              padding: "8px 15px",
-              borderRadius: 999,
-              background: "rgba(255,107,0,.1)",
-              border:
-                "1px solid rgba(255,107,0,.25)",
-              color: "#ff9a52",
-              fontSize: 13,
-              fontWeight: 700,
-              marginBottom: 20,
-            }}
-          >
-            ✨ Powered by Blazefire AI
-          </div>
-
-          <h1
-            style={{
-              fontSize:
-                "clamp(42px, 7vw, 76px)",
-              lineHeight: 1,
-              fontWeight: 950,
-              letterSpacing: "-4px",
-              margin: 0,
-            }}
-          >
-            Create.
-            <span style={{ color: "#ff6b00" }}>
-              {" "}
-              Imagine.
-            </span>
-            <br />
-            Build Anything.
-          </h1>
-
-          <p
-            style={{
-              color: "#888",
-              maxWidth: 650,
-              margin: "25px auto 0",
-              lineHeight: 1.7,
-              fontSize: 16,
-            }}
-          >
-            Create high-quality AI images, crystal-clear
-            posters and useful content with Blazefire.ai.
-          </p>
+      <section className="hero">
+        <div className="eyebrow">
+          AI CREATIVE STUDIO
         </div>
 
-        {/* TABS */}
+        <h1>
+          Create.
+          <span> Imagine.</span>
+          <br />
+          Build anything.
+        </h1>
 
-        <div
-          style={{
-            maxWidth: 720,
-            margin: "45px auto 0",
-            padding: 5,
-            display: "flex",
-            gap: 5,
-            borderRadius: 18,
-            background: "rgba(255,255,255,.04)",
-            border:
-              "1px solid rgba(255,255,255,.08)",
-          }}
+        <p>
+          Generate images, posters, pamphlets and
+          topic-aware writing from one clean workspace.
+        </p>
+      </section>
+
+      {/* GENERATOR */}
+
+      <section className="generator">
+        <nav
+          className="tabs"
+          aria-label="Generator modes"
         >
-          {[
-            ["image", "🎨 Image"],
-            ["poster", "📝 Poster"],
-            ["writer", "✍️ Writer"],
-          ].map(([value, label]) => (
+          {tabs.map((tabItem) => (
             <button
-              key={value}
+              key={tabItem.id}
+              className={
+                mode === tabItem.id
+                  ? "tab active"
+                  : "tab"
+              }
               onClick={() => {
-                setTab(value as Tab);
+                setMode(tabItem.id);
                 setError("");
               }}
-              style={{
-                flex: 1,
-                border: "none",
-                borderRadius: 13,
-                padding: "13px 10px",
-                cursor: "pointer",
-                background:
-                  tab === value
-                    ? "#ff6b00"
-                    : "transparent",
-                color:
-                  tab === value ? "#000" : "#999",
-                fontWeight: 800,
-              }}
             >
-              {label}
+              <span className="tabIcon">
+                {tabItem.icon}
+              </span>
+
+              {tabItem.label}
             </button>
           ))}
-        </div>
+        </nav>
 
-        {/* MAIN GRID */}
+        <div className="card">
+          <div className="cardHeader">
+            <div>
+              <h2>
+                {mode === "image"
+                  ? "AI Image Generator"
+                  : mode === "poster"
+                  ? "Poster & Pamphlet Designer"
+                  : "AI Writer"}
+              </h2>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns:
-              "repeat(auto-fit,minmax(320px,1fr))",
-            gap: 25,
-            marginTop: 25,
-          }}
-        >
-          {/* INPUT PANEL */}
-
-          <div
-            style={{
-              border:
-                "1px solid rgba(255,255,255,.09)",
-              background: "rgba(255,255,255,.035)",
-              borderRadius: 25,
-              padding: 25,
-            }}
-          >
-            {tab === "poster" ? (
-              <>
-                <h2 style={{ marginTop: 0 }}>
-                  Professional Poster
-                </h2>
-
-                <p
-                  style={{
-                    color: "#777",
-                    fontSize: 13,
-                    lineHeight: 1.6,
-                  }}
-                >
-                  AI creates the background. Your exact
-                  text is added separately for maximum
-                  clarity.
-                </p>
-
-                <Input
-                  label="Main Title"
-                  value={title}
-                  onChange={setTitle}
-                  placeholder="Annual Science Exhibition"
-                />
-
-                <Input
-                  label="Subtitle"
-                  value={subtitle}
-                  onChange={setSubtitle}
-                  placeholder="Discover • Learn • Create"
-                />
-
-                <TextArea
-                  label="Details"
-                  value={details}
-                  onChange={setDetails}
-                  placeholder={
-                    "25 October 2026\nSchool Auditorium\n10:00 AM"
-                  }
-                  rows={4}
-                />
-
-                <TextArea
-                  label="Design"
-                  value={prompt}
-                  onChange={setPrompt}
-                  placeholder="Modern blue science theme, futuristic laboratory, glowing scientific elements..."
-                  rows={5}
-                />
-              </>
-            ) : (
-              <>
-                <h2 style={{ marginTop: 0 }}>
-                  {tab === "image"
-                    ? "AI Image Generator"
-                    : "AI Writer"}
-                </h2>
-
-                <p
-                  style={{
-                    color: "#777",
-                    fontSize: 13,
-                    lineHeight: 1.6,
-                  }}
-                >
-                  {tab === "image"
-                    ? "Describe the image you want to create."
-                    : "Describe what you want Blazefire AI to write."}
-                </p>
-
-                <TextArea
-                  label="Prompt"
-                  value={prompt}
-                  onChange={setPrompt}
-                  placeholder={
-                    tab === "image"
-                      ? "A futuristic city at sunset, cinematic lighting, realistic architecture, ultra detailed..."
-                      : "Write a report about renewable energy for students..."
-                  }
-                  rows={12}
-                />
-              </>
-            )}
-
-            {/* ERROR */}
-
-            {error && (
-              <div
-                style={{
-                  marginTop: 15,
-                  padding: 13,
-                  borderRadius: 12,
-                  background:
-                    "rgba(255,50,50,.1)",
-                  border:
-                    "1px solid rgba(255,50,50,.2)",
-                  color: "#ff8888",
-                  fontSize: 13,
-                }}
-              >
-                {error}
-              </div>
-            )}
-
-            {/* GENERATE */}
-
-            <button
-              onClick={handleGenerate}
-              disabled={loading}
-              style={{
-                width: "100%",
-                marginTop: 20,
-                padding: "16px",
-                border: "none",
-                borderRadius: 15,
-                background: loading
-                  ? "#6b3000"
-                  : "#ff6b00",
-                color: "#000",
-                fontWeight: 900,
-                cursor: loading
-                  ? "not-allowed"
-                  : "pointer",
-                fontSize: 15,
-              }}
-            >
-              {loading
-                ? "⏳ Creating..."
-                : "☄️ Generate with Blazefire AI"}
-            </button>
-          </div>
-
-          {/* RESULT PANEL */}
-
-          <div
-            style={{
-              border:
-                "1px solid rgba(255,255,255,.09)",
-              background: "rgba(255,255,255,.025)",
-              borderRadius: 25,
-              padding: 20,
-              minHeight: 500,
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: 15,
-              }}
-            >
-              <div>
-                <div
-                  style={{
-                    fontWeight: 800,
-                  }}
-                >
-                  Result
-                </div>
-
-                <div
-                  style={{
-                    color: "#666",
-                    fontSize: 11,
-                    marginTop: 3,
-                  }}
-                >
-                  Blazefire.ai
-                </div>
-              </div>
-
-              {image && (
-                <button
-                  onClick={
-                    tab === "poster"
-                      ? downloadPoster
-                      : downloadImage
-                  }
-                  style={{
-                    padding: "9px 13px",
-                    borderRadius: 10,
-                    border:
-                      "1px solid rgba(255,255,255,.1)",
-                    background:
-                      "rgba(255,255,255,.04)",
-                    color: "#fff",
-                    cursor: "pointer",
-                  }}
-                >
-                  ↓ Download
-                </button>
-              )}
+              <p>
+                {mode === "image"
+                  ? "Describe exactly what you want to see."
+                  : mode === "poster"
+                  ? "Create a visual design while keeping important poster text readable."
+                  : "Ask for an answer, explanation, article, notes, ideas or another writing task."}
+              </p>
             </div>
 
-            {/* WRITER RESULT */}
-
-            {tab === "writer" ? (
-              <div
-                style={{
-                  minHeight: 420,
-                  padding: 22,
-                  borderRadius: 18,
-                  background:
-                    "rgba(0,0,0,.35)",
-                  border:
-                    "1px solid rgba(255,255,255,.07)",
-                  whiteSpace: "pre-wrap",
-                  lineHeight: 1.8,
-                  color: "#ddd",
-                  fontSize: 14,
-                }}
-              >
-                {loading ? (
-                  <div
-                    style={{
-                      minHeight: 380,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: "#666",
-                    }}
-                  >
-                    Writing...
-                  </div>
-                ) : writerOutput ? (
-                  writerOutput
-                ) : (
-                  <EmptyResult />
-                )}
-              </div>
-            ) : image ? (
-              /* POSTER */
-
-              tab === "poster" ? (
-                <div
-                  style={{
-                    position: "relative",
-                    width: "100%",
-                    overflow: "hidden",
-                    borderRadius: 18,
-                    background: "#000",
-                    aspectRatio: "3 / 2",
-                  }}
-                >
-                  <img
-                    src={image}
-                    alt="Blazefire AI poster"
-                    style={{
-                      position: "absolute",
-                      inset: 0,
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                    }}
-                  />
-
-                  {/* DARK OVERLAY */}
-
-                  <div
-                    style={{
-                      position: "absolute",
-                      inset: 0,
-                      background:
-                        "linear-gradient(180deg,rgba(0,0,0,.15),rgba(0,0,0,.45))",
-                    }}
-                  />
-
-                  {/* EXACT TEXT */}
-
-                  <div
-                    style={{
-                      position: "absolute",
-                      inset: 0,
-                      display: "flex",
-                      flexDirection: "column",
-                      justifyContent: "center",
-                      alignItems: "center",
-                      textAlign: "center",
-                      padding: "8%",
-                    }}
-                  >
-                    <h2
-                      style={{
-                        margin: 0,
-                        color: "#fff",
-                        fontSize:
-                          "clamp(25px,5vw,52px)",
-                        lineHeight: 1.05,
-                        fontWeight: 950,
-                        textShadow:
-                          "0 4px 25px rgba(0,0,0,.9)",
-                        maxWidth: "95%",
-                      }}
-                    >
-                      {title}
-                    </h2>
-
-                    {subtitle && (
-                      <div
-                        style={{
-                          marginTop: 14,
-                          color: "#fff",
-                          fontSize:
-                            "clamp(14px,2.5vw,25px)",
-                          fontWeight: 700,
-                          textShadow:
-                            "0 3px 15px rgba(0,0,0,.9)",
-                          maxWidth: "90%",
-                        }}
-                      >
-                        {subtitle}
-                      </div>
-                    )}
-
-                    {details && (
-                      <div
-                        style={{
-                          marginTop: 20,
-                          whiteSpace: "pre-line",
-                          color: "#fff",
-                          fontSize:
-                            "clamp(11px,1.7vw,17px)",
-                          lineHeight: 1.6,
-                          fontWeight: 600,
-                          textShadow:
-                            "0 2px 12px rgba(0,0,0,.9)",
-                          maxWidth: "85%",
-                        }}
-                      >
-                        {details}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* BLAZEFIRE BRAND */}
-
-                  <div
-                    style={{
-                      position: "absolute",
-                      bottom: 15,
-                      right: 18,
-                      fontSize: 10,
-                      fontWeight: 900,
-                      letterSpacing: 2,
-                      color:
-                        "rgba(255,255,255,.75)",
-                    }}
-                  >
-                    BLAZEFIRE.AI
-                  </div>
-                </div>
-              ) : (
-                /* NORMAL IMAGE */
-
-                <div
-                  style={{
-                    borderRadius: 18,
-                    overflow: "hidden",
-                    background: "#000",
-                  }}
-                >
-                  <img
-                    src={image}
-                    alt="Blazefire AI generated image"
-                    style={{
-                      width: "100%",
-                      height: "auto",
-                      display: "block",
-                    }}
-                  />
-                </div>
-              )
-            ) : (
-              <EmptyResult />
-            )}
+            <div className="qualityBadge">
+              HD • Smart • Safe
+            </div>
           </div>
-        </div>
 
-        {/* FEATURES */}
+          {/* POSTER OPTIONS */}
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns:
-              "repeat(auto-fit,minmax(220px,1fr))",
-            gap: 15,
-            marginTop: 35,
-          }}
-        >
-          <Feature
-            icon="🎨"
-            title="High Quality"
-            text="Large-resolution AI image generation."
-          />
+          {mode === "poster" && (
+            <div className="selectRow">
+              <label>
+                Design style
 
-          <Feature
-            icon="🔤"
-            title="Clear Typography"
-            text="Poster text is rendered by the browser instead of AI."
-          />
+                <select
+                  value={style}
+                  onChange={(event) =>
+                    setStyle(
+                      event.target.value as Style
+                    )
+                  }
+                >
+                  <option>Modern</option>
+                  <option>Minimal</option>
+                  <option>Festival</option>
+                  <option>Business</option>
+                  <option>Education</option>
+                  <option>Event</option>
+                </select>
+              </label>
 
-          <Feature
-            icon="⚡"
-            title="Blazefire AI"
-            text="One simple workspace for images, posters and writing."
-          />
+              <label>
+                Layout
+
+                <select
+                  value={ratio}
+                  onChange={(event) =>
+                    setRatio(
+                      event.target.value as Ratio
+                    )
+                  }
+                >
+                  <option value="square">
+                    Square
+                  </option>
+
+                  <option value="portrait">
+                    Portrait
+                  </option>
+
+                  <option value="landscape">
+                    Landscape
+                  </option>
+                </select>
+              </label>
+            </div>
+          )}
+
+          {/* PROMPT */}
+
+          <div className="promptArea">
+            <textarea
+              value={prompt}
+              maxLength={4000}
+              onChange={(event) =>
+                setPrompt(event.target.value)
+              }
+              onKeyDown={(event) => {
+                if (
+                  (event.ctrlKey ||
+                    event.metaKey) &&
+                  event.key === "Enter"
+                ) {
+                  generate();
+                }
+              }}
+              placeholder={
+                mode === "image"
+                  ? "Example: A futuristic Indian city at sunset, cinematic lighting, highly detailed..."
+                  : mode === "poster"
+                  ? "Example: School Science Exhibition. Headline: Science Expo 2026. Date: 12 October. Add a clean educational design..."
+                  : "Example: Explain photosynthesis for a class 8 student with headings, simple examples and a short summary."
+              }
+            />
+
+            <div className="promptBottom">
+              <button
+                className={
+                  listening
+                    ? "micButton listening"
+                    : "micButton"
+                }
+                onClick={startMicrophone}
+                title="Voice input"
+                aria-label="Voice input"
+              >
+                {listening ? "●" : "🎙"}
+              </button>
+
+              <span>
+                {prompt.length}/4000
+              </span>
+            </div>
+          </div>
+
+          {/* GENERATE BUTTON */}
+
+          <button
+            className="generateButton"
+            disabled={loading}
+            onClick={generate}
+          >
+            {loading
+              ? "Generating..."
+              : mode === "writer"
+              ? "Generate Answer"
+              : "Generate"}
+          </button>
+
+          <div className="shortcut">
+            Tip: Ctrl/Cmd + Enter also generates.
+          </div>
+
+          {/* ERROR */}
+
+          {error && (
+            <div className="errorBox">
+              {error}
+            </div>
+          )}
+
+          {/* PRIVACY */}
+
+          <div className="privacyBox">
+            <strong>Privacy:</strong>{" "}
+            Teenx Generator does not save your prompts
+            in browser history or its own prompt
+            database. Your prompt is sent to the
+            configured AI provider only when you press
+            Generate. Do not enter passwords, private
+            keys or other sensitive information.
+          </div>
         </div>
       </section>
 
-      {/* FOOTER */}
+      {/* RESULT */}
 
-      <footer
-        style={{
-          borderTop:
-            "1px solid rgba(255,255,255,.08)",
-          padding: "35px 20px",
-          textAlign: "center",
-          color: "#555",
-        }}
-      >
-        <div
-          style={{
-            color: "#fff",
-            fontWeight: 900,
-            fontSize: 20,
-          }}
-        >
-          Blaze
-          <span style={{ color: "#ff6b00" }}>
-            fire
-          </span>
-          .ai
-        </div>
+      {(image ||
+        writerText ||
+        posterBackground) && (
+        <section className="resultSection">
+          <div className="resultHeader">
+            <div>
+              <div className="eyebrow">
+                RESULT
+              </div>
 
-        <div
-          style={{
-            marginTop: 8,
-            fontSize: 12,
-          }}
-        >
-          AI Creation Studio
-        </div>
+              <h2>Your generation</h2>
+            </div>
 
-        <div
-          style={{
-            marginTop: 12,
-            fontSize: 11,
-          }}
-        >
-          © 2026 Blazefire.ai
-        </div>
+            <div className="resultActions">
+              <button
+                className="secondaryButton"
+                onClick={clearAll}
+              >
+                Clear
+              </button>
+
+              {mode === "image" &&
+                image && (
+                  <button
+                    className="downloadButton"
+                    onClick={() =>
+                      downloadDataUrl(
+                        image,
+                        "teenx-generator-image.png"
+                      )
+                    }
+                  >
+                    Download PNG
+                  </button>
+                )}
+
+              {mode === "poster" &&
+                posterCopy && (
+                  <button
+                    className="downloadButton"
+                    onClick={downloadPoster}
+                  >
+                    Download Poster
+                  </button>
+                )}
+            </div>
+          </div>
+
+          {/* IMAGE RESULT */}
+
+          {mode === "image" &&
+            image && (
+              <div className="imageResult">
+                <img
+                  src={image}
+                  alt="Generated by Teenx Generator"
+                />
+              </div>
+            )}
+
+          {/* WRITER RESULT */}
+
+          {mode === "writer" &&
+            writerText && (
+              <article className="writerResult">
+                {writerText}
+              </article>
+            )}
+
+          {/* POSTER RESULT */}
+
+          {mode === "poster" &&
+            posterBackground &&
+            posterCopy && (
+              <div className="posterResult">
+                <canvas ref={canvasRef} />
+
+                <p>
+                  Poster text is rendered separately
+                  in the browser so important wording
+                  stays readable instead of depending
+                  on AI typography.
+                </p>
+              </div>
+            )}
+        </section>
+      )}
+
+      <footer>
+        <strong>Teenx Generator</strong>
+        <span>AI generation workspace</span>
       </footer>
     </main>
-  );
-}
-
-/* INPUT */
-
-function Input({
-  label,
-  value,
-  onChange,
-  placeholder,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  placeholder: string;
-}) {
-  return (
-    <div style={{ marginTop: 18 }}>
-      <label
-        style={{
-          display: "block",
-          marginBottom: 8,
-          fontSize: 13,
-          fontWeight: 800,
-        }}
-      >
-        {label}
-      </label>
-
-      <input
-        value={value}
-        onChange={(e) =>
-          onChange(e.target.value)
-        }
-        placeholder={placeholder}
-        style={{
-          width: "100%",
-          padding: "13px 14px",
-          borderRadius: 12,
-          border:
-            "1px solid rgba(255,255,255,.1)",
-          background: "rgba(0,0,0,.4)",
-          color: "#fff",
-          outline: "none",
-        }}
-      />
-    </div>
-  );
-}
-
-/* TEXTAREA */
-
-function TextArea({
-  label,
-  value,
-  onChange,
-  placeholder,
-  rows,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  placeholder: string;
-  rows: number;
-}) {
-  return (
-    <div style={{ marginTop: 18 }}>
-      <label
-        style={{
-          display: "block",
-          marginBottom: 8,
-          fontSize: 13,
-          fontWeight: 800,
-        }}
-      >
-        {label}
-      </label>
-
-      <textarea
-        value={value}
-        onChange={(e) =>
-          onChange(e.target.value)
-        }
-        placeholder={placeholder}
-        rows={rows}
-        style={{
-          width: "100%",
-          padding: "14px",
-          borderRadius: 12,
-          border:
-            "1px solid rgba(255,255,255,.1)",
-          background: "rgba(0,0,0,.4)",
-          color: "#fff",
-          outline: "none",
-          resize: "vertical",
-          lineHeight: 1.6,
-        }}
-      />
-    </div>
-  );
-}
-
-/* EMPTY */
-
-function EmptyResult() {
-  return (
-    <div
-      style={{
-        minHeight: 420,
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        alignItems: "center",
-        textAlign: "center",
-        borderRadius: 18,
-        border:
-          "1px dashed rgba(255,255,255,.1)",
-        background: "rgba(0,0,0,.2)",
-      }}
-    >
-      <div style={{ fontSize: 50 }}>
-        ✨
-      </div>
-
-      <div
-        style={{
-          marginTop: 15,
-          fontWeight: 800,
-          color: "#aaa",
-        }}
-      >
-        Ready to create
-      </div>
-
-      <div
-        style={{
-          marginTop: 7,
-          maxWidth: 300,
-          color: "#555",
-          fontSize: 13,
-          lineHeight: 1.6,
-        }}
-      >
-        Enter your prompt and generate your
-        Blazefire AI creation.
-      </div>
-    </div>
-  );
-}
-
-/* FEATURE */
-
-function Feature({
-  icon,
-  title,
-  text,
-}: {
-  icon: string;
-  title: string;
-  text: string;
-}) {
-  return (
-    <div
-      style={{
-        padding: 22,
-        borderRadius: 18,
-        border:
-          "1px solid rgba(255,255,255,.08)",
-        background: "rgba(255,255,255,.025)",
-      }}
-    >
-      <div style={{ fontSize: 28 }}>
-        {icon}
-      </div>
-
-      <div
-        style={{
-          marginTop: 12,
-          fontWeight: 800,
-        }}
-      >
-        {title}
-      </div>
-
-      <div
-        style={{
-          marginTop: 7,
-          color: "#666",
-          fontSize: 13,
-          lineHeight: 1.6,
-        }}
-      >
-        {text}
-      </div>
-    </div>
   );
 }
